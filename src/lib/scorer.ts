@@ -55,9 +55,9 @@ export function getScoreLabel(score: number): {
   label: string;
   color: string;
 } {
-  if (score >= 90) return { label: "Excellent", color: "text-green-600" };
-  if (score >= 70) return { label: "Good", color: "text-blue-600" };
-  if (score >= 50) return { label: "Fair", color: "text-yellow-600" };
-  if (score >= 30) return { label: "Poor", color: "text-orange-600" };
-  return { label: "Critical", color: "text-red-600" };
+  if (score >= 90) return { label: "Excellent", color: "text-green-500" };
+  if (score >= 70) return { label: "Good", color: "text-blue-500" };
+  if (score >= 50) return { label: "Fair", color: "text-yellow-500" };
+  if (score >= 30) return { label: "Poor", color: "text-orange-500" };
+  return { label: "Critical", color: "text-red-500" };
 }

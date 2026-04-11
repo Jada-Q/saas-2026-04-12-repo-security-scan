@@ -21,15 +21,34 @@ function parseRepoUrl(input: string): { owner: string; repo: string } | null {
 }
 
 async function ghFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`https://api.github.com${path}`, {
-    headers: { Accept: "application/vnd.github.v3+json" },
-  });
-  if (!res.ok) {
-    if (res.status === 404) throw new Error("Repository not found. Make sure it is public.");
-    if (res.status === 403) throw new Error("GitHub API rate limit exceeded. Try again later.");
-    throw new Error(`GitHub API error: ${res.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(`https://api.github.com${path}`, {
+      headers: { Accept: "application/vnd.github.v3+json" },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      if (res.status === 404) throw new Error("Repository not found. Make sure it is public.");
+      if (res.status === 403) {
+        const resetHeader = res.headers.get("x-ratelimit-reset");
+        const resetTime = resetHeader
+          ? new Date(parseInt(resetHeader) * 1000).toLocaleTimeString()
+          : "a few minutes";
+        throw new Error(`GitHub API rate limit exceeded. Resets at ${resetTime}. Unauthenticated limit is 60 requests/hour.`);
+      }
+      throw new Error(`GitHub API error: ${res.status}`);
+    }
+    return res.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Request timed out. The GitHub API may be slow — try again.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-  return res.json() as Promise<T>;
 }
 
 export async function fetchRepoInfo(input: string): Promise<RepoInfo> {

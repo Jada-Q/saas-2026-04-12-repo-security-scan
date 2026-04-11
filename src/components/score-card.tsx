@@ -72,7 +72,7 @@ function StatBlock({
 }) {
   return (
     <div className="rounded-lg border p-3 text-center">
-      <div className={`text-2xl font-bold ${danger ? "text-red-600" : "text-green-600"}`}>
+      <div className={`text-2xl font-bold ${danger ? "text-red-500" : "text-green-500"}`}>
         {value}
       </div>
       <div className="text-xs text-muted-foreground">{label}</div>
