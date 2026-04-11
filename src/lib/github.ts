@@ -64,7 +64,7 @@ export async function fetchPackageJson(
     const data = await ghFetch<{ content: string }>(
       `/repos/${owner}/${repo}/contents/package.json?ref=${branch}`
     );
-    const decoded = atob(data.content);
+    const decoded = atob(data.content.replace(/\n/g, ""));
     const pkg = JSON.parse(decoded) as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
@@ -124,7 +124,7 @@ export async function fetchFileContent(
       `/repos/${owner}/${repo}/contents/${path}?ref=${branch}`
     );
     if (data.encoding === "base64") {
-      return atob(data.content);
+      return atob(data.content.replace(/\n/g, ""));
     }
     return data.content;
   } catch {

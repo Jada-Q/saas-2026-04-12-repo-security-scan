@@ -21,19 +21,6 @@ export function detectSourceMapLeaks(
     }
   }
 
-  // Also check for sourceMappingURL references in common build output dirs
-  const suspiciousPatterns = ["dist/", "build/", "public/", ".next/"];
-  for (const file of files) {
-    if (
-      suspiciousPatterns.some((p) => file.startsWith(p)) &&
-      (file.endsWith(".js") || file.endsWith(".mjs")) &&
-      !leaks.some((l) => l.file === file)
-    ) {
-      // Flag JS files in build dirs as potential source map leak sources
-      // (the actual .map file detection above catches the maps themselves)
-    }
-  }
-
   return leaks;
 }
 
@@ -162,10 +149,6 @@ const CONFUSABLES: Record<string, string> = {
   "\uFF44": "d",
   "\uFF45": "e",
   "\u0131": "i", // Turkish dotless ı
-  "\u006C": "l", // (l vs 1)
-  "\u0031": "1", // (1 vs l) — for context
-  "\u004F": "O", // (O vs 0)
-  "\u0030": "0", // (0 vs O)
 };
 
 const SCRIPT_NAMES: Record<string, string> = {

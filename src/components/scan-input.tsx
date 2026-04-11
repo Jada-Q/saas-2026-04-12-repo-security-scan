@@ -3,7 +3,32 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import type { ScanPhase } from "@/lib/types";
+
+const SCAN_STEPS: ScanPhase[] = [
+  "fetching-repo",
+  "scanning-deps",
+  "checking-sourcemaps",
+  "scanning-secrets",
+  "checking-homoglyphs",
+  "scoring",
+];
+
+function ScanProgress({ phase }: { phase: ScanPhase }) {
+  const currentIndex = SCAN_STEPS.indexOf(phase);
+  const progress = currentIndex >= 0 ? ((currentIndex + 1) / SCAN_STEPS.length) * 100 : 0;
+
+  return (
+    <div className="space-y-2">
+      <Progress value={progress} className="h-2" />
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>Step {currentIndex + 1} of {SCAN_STEPS.length}</span>
+        <span>{Math.round(progress)}%</span>
+      </div>
+    </div>
+  );
+}
 
 const PHASE_LABELS: Record<ScanPhase, string> = {
   idle: "",
@@ -73,10 +98,13 @@ export function ScanInput({
           )}
         </form>
 
-        {phase !== "idle" && phase !== "done" && (
-          <div className="mt-4 flex items-center gap-2">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
-            <span className="text-sm text-muted-foreground">{PHASE_LABELS[phase]}</span>
+        {phase !== "idle" && phase !== "done" && phase !== "error" && (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+              <span className="text-sm text-muted-foreground">{PHASE_LABELS[phase]}</span>
+            </div>
+            <ScanProgress phase={phase} />
           </div>
         )}
       </CardContent>
