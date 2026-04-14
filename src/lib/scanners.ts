@@ -4,6 +4,11 @@ import type { SourceMapLeak, ExposedSecret, HomoglyphIssue } from "./types";
 
 const SOURCE_MAP_EXTENSIONS = [".js.map", ".css.map", ".mjs.map"];
 
+const SOURCE_MAP_IGNORE_DIRS = [
+  "test", "tests", "__tests__", "fixtures", "__fixtures__",
+  "spec", "__mocks__", "vendor", "third_party", "node_modules",
+];
+
 export function detectSourceMapLeaks(
   files: string[],
   owner: string,
@@ -13,12 +18,16 @@ export function detectSourceMapLeaks(
   const leaks: SourceMapLeak[] = [];
 
   for (const file of files) {
-    if (SOURCE_MAP_EXTENSIONS.some((ext) => file.endsWith(ext))) {
-      leaks.push({
-        file,
-        url: `https://github.com/${owner}/${repo}/blob/${branch}/${file}`,
-      });
-    }
+    if (!SOURCE_MAP_EXTENSIONS.some((ext) => file.endsWith(ext))) continue;
+
+    // Skip source maps inside test/fixture/vendor directories
+    const parts = file.toLowerCase().split("/");
+    if (parts.some((p) => SOURCE_MAP_IGNORE_DIRS.includes(p))) continue;
+
+    leaks.push({
+      file,
+      url: `https://github.com/${owner}/${repo}/blob/${branch}/${file}`,
+    });
   }
 
   return leaks;

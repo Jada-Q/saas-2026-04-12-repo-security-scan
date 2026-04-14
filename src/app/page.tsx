@@ -1,11 +1,20 @@
 "use client";
 
+import { Suspense } from "react";
 import { ScanInput } from "@/components/scan-input";
 import { ScoreCard } from "@/components/score-card";
 import { ResultsTabs } from "@/components/results-tabs";
 import { useScanner } from "@/lib/use-scanner";
 
 export default function HomePage() {
+  return (
+    <Suspense>
+      <HomePageInner />
+    </Suspense>
+  );
+}
+
+function HomePageInner() {
   const { phase, result, error, scan, reset } = useScanner();
 
   return (

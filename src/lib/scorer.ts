@@ -21,8 +21,8 @@ export function calculateScore(result: Omit<ScanResult, "score" | "scannedAt">):
     }
   }
 
-  // Source map leak deductions
-  score -= result.sourceMapLeaks.length * 5;
+  // Source map leak deductions (cap at -20 to avoid over-penalizing large repos)
+  score -= Math.min(result.sourceMapLeaks.length * 5, 20);
 
   // Exposed secret deductions
   for (const secret of result.exposedSecrets) {

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type { ScanPhase } from "@/lib/types";
+import { getStoredToken, setStoredToken } from "@/lib/github";
 
 const SCAN_STEPS: ScanPhase[] = [
   "fetching-repo",
@@ -52,7 +54,41 @@ export function ScanInput({
   onReset: () => void;
 }) {
   const [url, setUrl] = useState("");
+  const [showToken, setShowToken] = useState(false);
+  const [token, setToken] = useState("");
+  const searchParams = useSearchParams();
+  const autoScannedRef = useRef(false);
   const isScanning = phase !== "idle" && phase !== "done" && phase !== "error";
+
+  // Load saved token
+  useEffect(() => {
+    const saved = getStoredToken();
+    if (saved) setToken(saved);
+  }, []);
+
+  const handleTokenSave = () => {
+    setStoredToken(token.trim() || null);
+    setShowToken(false);
+  };
+
+  // Auto-scan from URL params: ?repo=facebook/react
+  useEffect(() => {
+    if (autoScannedRef.current) return;
+    const repoParam = searchParams.get("repo");
+    if (repoParam) {
+      autoScannedRef.current = true;
+      setUrl(repoParam);
+      onScan(repoParam);
+    }
+  }, [searchParams, onScan]);
+
+  // Auto-scan on paste
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text").trim();
+    if (pasted && (pasted.includes("github.com/") || pasted.includes("/"))) {
+      setTimeout(() => onScan(pasted), 50);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,9 +117,11 @@ export function ScanInput({
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              onPaste={handlePaste}
               placeholder="e.g. facebook/react or https://github.com/vercel/next.js"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               disabled={isScanning}
+              autoFocus
             />
           </div>
 
@@ -97,6 +135,31 @@ export function ScanInput({
             </Button>
           )}
         </form>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowToken(!showToken)}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {token ? "Token configured (5,000 req/hr)" : "Add GitHub token for higher rate limits (optional)"}
+          </button>
+        </div>
+
+        {showToken && (
+          <div className="mt-2 flex gap-2">
+            <input
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="ghp_... or github_pat_..."
+              className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <Button size="sm" variant="outline" onClick={handleTokenSave}>
+              Save
+            </Button>
+          </div>
+        )}
 
         {phase !== "idle" && phase !== "done" && phase !== "error" && (
           <div className="mt-4 space-y-3">

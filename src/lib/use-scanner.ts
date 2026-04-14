@@ -7,14 +7,22 @@ import { checkVulnerabilities } from "./osv";
 import { detectSourceMapLeaks, scanSecrets, detectHomoglyphs } from "./scanners";
 import { calculateScore } from "./scorer";
 
-const SCANNABLE_EXTENSIONS = [
-  ".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs",
-  ".py", ".rb", ".go", ".java", ".rs",
-  ".json", ".yml", ".yaml", ".toml",
-  ".env", ".cfg", ".conf", ".ini",
+// High-risk files most likely to contain leaked secrets
+const HIGH_RISK_FILES = [
+  ".env", ".env.local", ".env.production", ".env.development",
+  "config.json", "config.yml", "config.yaml", "config.toml",
+  "secrets.json", "credentials.json", "service-account.json",
+  "docker-compose.yml", "docker-compose.yaml",
+  ".npmrc", ".pypirc",
 ];
 
-const MAX_FILE_SIZE_SCAN = 50; // max files to scan for secrets
+const SCANNABLE_EXTENSIONS = [
+  ".env", ".cfg", ".conf", ".ini",
+  ".json", ".yml", ".yaml", ".toml",
+  ".js", ".ts", ".py",
+];
+
+const MAX_FILE_SIZE_SCAN = 15; // reduced from 50 to save API calls
 
 export function useScanner() {
   const [phase, setPhase] = useState<ScanPhase>("idle");
@@ -42,10 +50,15 @@ export function useScanner() {
 
       // Phase 4: Scan secrets
       setPhase("scanning-secrets");
-      const scannableFiles = files
+      // Prioritize high-risk files, then scan by extension
+      const highRisk = files.filter((f) =>
+        HIGH_RISK_FILES.some((hr) => f.endsWith(hr) || f.split("/").pop() === hr)
+      );
+      const byExtension = files
         .filter((f) => SCANNABLE_EXTENSIONS.some((ext) => f.endsWith(ext)))
         .filter((f) => !f.includes("node_modules/") && !f.includes("vendor/"))
-        .slice(0, MAX_FILE_SIZE_SCAN);
+        .filter((f) => !highRisk.includes(f));
+      const scannableFiles = [...highRisk, ...byExtension].slice(0, MAX_FILE_SIZE_SCAN);
 
       const allSecrets = [];
       for (const filePath of scannableFiles) {
