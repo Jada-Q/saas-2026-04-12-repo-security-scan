@@ -48,7 +48,16 @@ export function ResultsTabs({ result }: { result: ScanResult }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <a
+          href="https://github.com/Jada-Q/ghscan-action"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="outline" size="sm">
+            Get GitHub Action
+          </Button>
+        </a>
         <Button onClick={handleExport} variant="outline" size="sm">
           Export Markdown
         </Button>
@@ -295,6 +304,26 @@ export function ResultsTabs({ result }: { result: ScanResult }) {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {(result.exposedSecrets.length > 0 || result.vulnerabilities.length > 0) && (
+        <Card className="border-blue-500/30 bg-blue-950/20">
+          <CardContent className="flex flex-col items-center gap-3 py-6 text-center sm:flex-row sm:text-left">
+            <div className="flex-1">
+              <p className="font-medium">Catch issues before they ship</p>
+              <p className="text-sm text-muted-foreground">
+                Add GHScan to your CI pipeline. Every PR gets scanned automatically.
+              </p>
+            </div>
+            <a
+              href="https://github.com/Jada-Q/ghscan-action"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button size="sm">View GitHub Action</Button>
+            </a>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
