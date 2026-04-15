@@ -108,6 +108,13 @@ export function useScanner() {
 
       setResult(scanResult);
       setPhase("done");
+
+      // Update URL for sharing (without triggering navigation)
+      if (typeof window !== "undefined") {
+        const shareUrl = new URL(window.location.href);
+        shareUrl.searchParams.set("repo", `${repo.owner}/${repo.repo}`);
+        window.history.replaceState(null, "", shareUrl.toString());
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
       setPhase("error");

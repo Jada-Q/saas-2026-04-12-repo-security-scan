@@ -20,19 +20,28 @@ function HomePageInner() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:px-6">
       <header className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight">Repo Security Scan</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Is Your Code Leaking Secrets?</h1>
         <p className="mt-2 text-muted-foreground">
-          Scan any public GitHub repository for vulnerabilities, source map leaks, exposed secrets,
-          and homoglyph attacks.
+          Check if your API keys, passwords, or database credentials are exposed in your GitHub repo.
+          152+ secret patterns. Takes ~15 seconds.
         </p>
       </header>
 
       <div className="space-y-6">
-        <ScanInput onScan={scan} phase={phase} onReset={reset} />
+        <ScanInput onScan={scan} phase={phase} onReset={reset} error={error} />
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-            {error}
+            <p>{error}</p>
+            {error.includes("rate limit") && (
+              <p className="mt-2 text-xs">
+                To fix this, add a GitHub token: go to{" "}
+                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="underline">
+                  github.com/settings/tokens
+                </a>
+                {" "}→ Generate new token (classic) → No scopes needed → paste it below.
+              </p>
+            )}
           </div>
         )}
 
@@ -44,25 +53,33 @@ function HomePageInner() {
         )}
 
         {phase === "idle" && !result && (
-          <div className="space-y-4 pt-8 text-center text-sm text-muted-foreground">
-            <p>Enter a GitHub repository URL to start scanning.</p>
+          <div className="space-y-6 pt-8 text-center text-sm text-muted-foreground">
             <div className="mx-auto grid max-w-lg grid-cols-1 gap-3 sm:grid-cols-2">
               <FeatureCard
-                title="Vulnerability Scan"
-                desc="Checks npm dependencies against the OSV.dev vulnerability database"
+                title="Exposed API Keys"
+                desc="Your OpenAI or Stripe key might be in your JS bundle right now"
               />
               <FeatureCard
-                title="Source Map Detection"
-                desc="Finds exposed .map files that could leak your source code"
+                title="Vulnerable Dependencies"
+                desc="Known security holes in your npm packages that attackers can exploit"
               />
               <FeatureCard
-                title="Secret Scanner"
-                desc="Detects exposed API keys, tokens, passwords, and emails"
+                title="Database Credentials"
+                desc="Supabase, Firebase, or Postgres connection strings visible to anyone"
               />
               <FeatureCard
-                title="Homoglyph Detection"
-                desc="Identifies Unicode spoofing in repo URLs and contributor names"
+                title="Source Code Leaks"
+                desc="Source maps exposing your original code to the public"
               />
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => scan("vercel/next.js")}
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                Try a demo scan on vercel/next.js
+              </button>
             </div>
           </div>
         )}

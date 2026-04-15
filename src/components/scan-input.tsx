@@ -48,10 +48,12 @@ export function ScanInput({
   onScan,
   phase,
   onReset,
+  error,
 }: {
   onScan: (url: string) => void;
   phase: ScanPhase;
   onReset: () => void;
+  error?: string | null;
 }) {
   const [url, setUrl] = useState("");
   const [showToken, setShowToken] = useState(false);
@@ -82,11 +84,11 @@ export function ScanInput({
     }
   }, [searchParams, onScan]);
 
-  // Auto-scan on paste
+  // Fill input on paste (no auto-scan — let user confirm)
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     const pasted = e.clipboardData.getData("text").trim();
     if (pasted && (pasted.includes("github.com/") || pasted.includes("/"))) {
-      setTimeout(() => onScan(pasted), 50);
+      setUrl(pasted);
     }
   };
 
@@ -110,7 +112,7 @@ export function ScanInput({
               htmlFor="repo-url"
               className="mb-2 block text-sm font-medium text-muted-foreground"
             >
-              GitHub Repository URL or owner/repo
+              Paste any GitHub repo link
             </label>
             <input
               id="repo-url"
@@ -118,7 +120,7 @@ export function ScanInput({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onPaste={handlePaste}
-              placeholder="e.g. facebook/react or https://github.com/vercel/next.js"
+              placeholder="https://github.com/your-name/your-repo"
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               disabled={isScanning}
               autoFocus
@@ -136,15 +138,17 @@ export function ScanInput({
           )}
         </form>
 
-        <div className="mt-3 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowToken(!showToken)}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {token ? "Token configured (5,000 req/hr)" : "Add GitHub token for higher rate limits (optional)"}
-          </button>
-        </div>
+        {(token || error?.includes("rate limit")) && (
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowToken(!showToken)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {token ? "GitHub token configured" : "Add a GitHub token to continue scanning"}
+            </button>
+          </div>
+        )}
 
         {showToken && (
           <div className="mt-2 flex gap-2">
@@ -159,6 +163,12 @@ export function ScanInput({
               Save
             </Button>
           </div>
+        )}
+
+        {phase === "idle" && !token && !error?.includes("rate limit") && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Runs in your browser. Nothing leaves your machine.
+          </p>
         )}
 
         {phase !== "idle" && phase !== "done" && phase !== "error" && (

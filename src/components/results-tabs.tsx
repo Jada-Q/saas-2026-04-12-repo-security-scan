@@ -7,6 +7,9 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import type { ScanResult } from "@/lib/types";
 import { exportToMarkdown } from "@/lib/export-markdown";
+import { SECRET_PATTERNS } from "@/lib/secret-patterns";
+
+const SECRET_PATTERNS_COUNT = SECRET_PATTERNS.length;
 
 const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: "bg-red-600 text-white",
@@ -15,11 +18,20 @@ const SEVERITY_COLORS: Record<string, string> = {
   LOW: "bg-blue-400 text-white",
 };
 
-const SECRET_TYPE_LABELS: Record<string, string> = {
-  "api-key": "API Key",
-  token: "Token",
-  password: "Password",
-  email: "Email",
+const SECRET_SEVERITY_COLORS: Record<string, string> = {
+  critical: "bg-red-600 text-white",
+  high: "bg-orange-500 text-white",
+  medium: "bg-yellow-500 text-black",
+  low: "bg-blue-400 text-white",
+};
+
+const SECRET_SEVERITY_ORDER = ["critical", "high", "medium", "low"] as const;
+
+const SEVERITY_FIX_HINTS: Record<string, string> = {
+  critical: "Rotate these credentials immediately, then move them to .env and add .env to .gitignore.",
+  high: "These should be rotated and moved to environment variables before your next deploy.",
+  medium: "Verify these are not real credentials. If they are, move them to .env.",
+  low: "Low risk, but review to make sure no sensitive data is exposed.",
 };
 
 export function ResultsTabs({ result }: { result: ScanResult }) {
@@ -151,24 +163,41 @@ export function ResultsTabs({ result }: { result: ScanResult }) {
               {result.exposedSecrets.length === 0 ? (
                 <EmptyState message="No exposed secrets (emails, API keys, tokens) detected in scanned files." />
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    These patterns match known secret formats. Verify and rotate any real credentials.
+                    {result.exposedSecrets.length} secret(s) detected across {SECRET_PATTERNS_COUNT} patterns. Verify and rotate any real credentials.
                   </p>
                   <Separator />
-                  {result.exposedSecrets.map((secret, i) => (
-                    <div key={`${secret.file}-${secret.line}-${i}`} className="rounded border p-3">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="destructive">
-                          {SECRET_TYPE_LABELS[secret.type] ?? secret.type}
-                        </Badge>
-                        <code className="text-sm">{secret.value}</code>
+                  {SECRET_SEVERITY_ORDER.map((severity) => {
+                    const filtered = result.exposedSecrets.filter((s) => s.severity === severity);
+                    if (filtered.length === 0) return null;
+                    return (
+                      <div key={severity} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className={SECRET_SEVERITY_COLORS[severity]}>
+                            {severity.toUpperCase()}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {filtered.length} finding(s)
+                          </span>
+                        </div>
+                        <p className="ml-2 text-xs text-muted-foreground italic">
+                          {SEVERITY_FIX_HINTS[severity]}
+                        </p>
+                        {filtered.map((secret, i) => (
+                          <div key={`${secret.file}-${secret.line}-${i}`} className="ml-2 rounded border p-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{secret.patternName}</span>
+                              <code className="text-sm text-muted-foreground">{secret.value}</code>
+                            </div>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {secret.file}:{secret.line}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {secret.file}:{secret.line}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

@@ -32,50 +32,69 @@ export function ScoreCard({ result }: { result: ScanResult }) {
             </span>
           </div>
           <Progress value={result.score} className="h-3" />
+          <p className="text-xs text-muted-foreground">
+            {getScoreContext(result.score)}
+          </p>
 
-          <div className="grid grid-cols-2 gap-4 pt-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <StatBlock
+              label="Exposed Secrets"
+              value={result.exposedSecrets.length}
+              danger={result.exposedSecrets.length > 0}
+              primary
+            />
             <StatBlock
               label="Vulnerabilities"
               value={result.vulnerabilities.length}
               danger={result.vulnerabilities.length > 0}
-            />
-            <StatBlock
-              label="Source Maps"
-              value={result.sourceMapLeaks.length}
-              danger={result.sourceMapLeaks.length > 0}
-            />
-            <StatBlock
-              label="Secrets"
-              value={result.exposedSecrets.length}
-              danger={result.exposedSecrets.length > 0}
-            />
-            <StatBlock
-              label="Homoglyphs"
-              value={result.homoglyphIssues.length}
-              danger={result.homoglyphIssues.length > 0}
+              primary
             />
           </div>
+          {(result.sourceMapLeaks.length > 0 || result.homoglyphIssues.length > 0) && (
+            <div className="grid grid-cols-2 gap-4">
+              <StatBlock
+                label="Source Maps"
+                value={result.sourceMapLeaks.length}
+                danger={result.sourceMapLeaks.length > 0}
+              />
+              <StatBlock
+                label="Homoglyphs"
+                value={result.homoglyphIssues.length}
+                danger={result.homoglyphIssues.length > 0}
+              />
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
+function getScoreContext(score: number): string {
+  if (score >= 90) return "No immediate issues found. Keep dependencies updated.";
+  if (score >= 70) return "Some issues detected, but nothing critical. Review the findings below.";
+  if (score >= 50) return "Multiple issues found. Address the high-severity items before deploying.";
+  if (score >= 30) return "Serious security issues detected. Fix critical findings immediately.";
+  return "Critical security problems found. Your credentials may already be exposed — rotate them now.";
+}
+
 function StatBlock({
   label,
   value,
   danger,
+  primary,
 }: {
   label: string;
   value: number;
   danger: boolean;
+  primary?: boolean;
 }) {
   return (
-    <div className="rounded-lg border p-3 text-center">
-      <div className={`text-2xl font-bold ${danger ? "text-red-500" : "text-green-500"}`}>
+    <div className={`rounded-lg border p-3 text-center ${primary ? "border-2" : ""} ${primary && danger ? "border-red-300 dark:border-red-800" : ""}`}>
+      <div className={`font-bold ${primary ? "text-3xl" : "text-xl"} ${danger ? "text-red-500" : "text-green-500"}`}>
         {value}
       </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`text-muted-foreground ${primary ? "text-sm" : "text-xs"}`}>{label}</div>
     </div>
   );
 }
