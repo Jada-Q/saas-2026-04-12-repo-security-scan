@@ -1,5 +1,5 @@
-import type { SourceMapLeak, ExposedSecret, HomoglyphIssue } from "./types";
-import { SECRET_PATTERNS } from "./secret-patterns";
+import type { SourceMapLeak, ExposedSecret, HomoglyphIssue } from "./types.js";
+import { SECRET_PATTERNS } from "./secret-patterns.js";
 
 // --- Source Map Detection ---
 
@@ -21,7 +21,6 @@ export function detectSourceMapLeaks(
   for (const file of files) {
     if (!SOURCE_MAP_EXTENSIONS.some((ext) => file.endsWith(ext))) continue;
 
-    // Skip source maps inside test/fixture/vendor directories
     const parts = file.toLowerCase().split("/");
     if (parts.some((p) => SOURCE_MAP_IGNORE_DIRS.includes(p))) continue;
 
@@ -73,12 +72,10 @@ export function scanSecrets(
     const line = lines[i];
     const trimmed = line.trim();
 
-    // Skip comments
     if (trimmed.startsWith("//") || trimmed.startsWith("#") || trimmed.startsWith("*") || trimmed.startsWith("<!--")) {
       continue;
     }
 
-    // Check for emails (only in code files, not docs)
     if (!filePath.endsWith(".md") && !filePath.endsWith(".txt")) {
       const emailMatches = line.match(EMAIL_PATTERN);
       if (emailMatches) {
@@ -95,14 +92,12 @@ export function scanSecrets(
       }
     }
 
-    // Check all secret patterns
     for (const sp of SECRET_PATTERNS) {
       const regex = new RegExp(sp.pattern.source, sp.pattern.flags);
       let match;
       while ((match = regex.exec(line)) !== null) {
         const value = match[1] ?? match[0];
 
-        // Skip false positives
         if (isFalsePositive(value)) continue;
 
         const dedupeKey = `${sp.id}:${maskSecret(value)}:${filePath}`;
@@ -136,94 +131,36 @@ function maskSecret(value: string): string {
 
 // --- Homoglyph Detection ---
 
-// Common confusable character mappings (Unicode → ASCII)
 const CONFUSABLES: Record<string, string> = {
-  "\u0430": "a", // Cyrillic а
-  "\u0435": "e", // Cyrillic е
-  "\u043E": "o", // Cyrillic о
-  "\u0440": "p", // Cyrillic р
-  "\u0441": "c", // Cyrillic с
-  "\u0443": "y", // Cyrillic у
-  "\u0445": "x", // Cyrillic х
-  "\u0456": "i", // Cyrillic і
-  "\u0455": "s", // Cyrillic ѕ
-  "\u0458": "j", // Cyrillic ј
-  "\u04BB": "h", // Cyrillic һ
-  "\u0501": "d", // Cyrillic ԁ
-  "\u051B": "q", // Cyrillic ԛ
-  "\u0261": "g", // Latin ɡ
-  "\u026A": "i", // Latin ɪ
-  "\u0432": "b", // Cyrillic в (close to 6/b)
-  "\u043D": "h", // Cyrillic н
-  "\u0433": "r", // Cyrillic г (in some fonts)
-  "\u03B1": "a", // Greek α
-  "\u03B5": "e", // Greek ε (sometimes)
-  "\u03BF": "o", // Greek ο
-  "\u03C1": "p", // Greek ρ
-  "\u0391": "A", // Greek Α
-  "\u0392": "B", // Greek Β
-  "\u0395": "E", // Greek Ε
-  "\u0397": "H", // Greek Η
-  "\u0399": "I", // Greek Ι
-  "\u039A": "K", // Greek Κ
-  "\u039C": "M", // Greek Μ
-  "\u039D": "N", // Greek Ν
-  "\u039F": "O", // Greek Ο
-  "\u03A1": "P", // Greek Ρ
-  "\u03A4": "T", // Greek Τ
-  "\u03A5": "Y", // Greek Υ
-  "\u03A7": "X", // Greek Χ
-  "\u03A6": "Z", // Greek Ζ
-  "\uFF41": "a", // Fullwidth ａ
-  "\uFF42": "b",
-  "\uFF43": "c",
-  "\uFF44": "d",
-  "\uFF45": "e",
-  "\u0131": "i", // Turkish dotless ı
+  "\u0430": "a", "\u0435": "e", "\u043E": "o", "\u0440": "p",
+  "\u0441": "c", "\u0443": "y", "\u0445": "x", "\u0456": "i",
+  "\u0455": "s", "\u0458": "j", "\u04BB": "h", "\u0501": "d",
+  "\u051B": "q", "\u0261": "g", "\u026A": "i", "\u0432": "b",
+  "\u043D": "h", "\u0433": "r",
+  "\u03B1": "a", "\u03B5": "e", "\u03BF": "o", "\u03C1": "p",
+  "\u0391": "A", "\u0392": "B", "\u0395": "E", "\u0397": "H",
+  "\u0399": "I", "\u039A": "K", "\u039C": "M", "\u039D": "N",
+  "\u039F": "O", "\u03A1": "P", "\u03A4": "T", "\u03A5": "Y",
+  "\u03A7": "X", "\u03A6": "Z",
+  "\uFF41": "a", "\uFF42": "b", "\uFF43": "c", "\uFF44": "d", "\uFF45": "e",
+  "\u0131": "i",
 };
 
 const SCRIPT_NAMES: Record<string, string> = {
-  "\u0430": "Cyrillic",
-  "\u0435": "Cyrillic",
-  "\u043E": "Cyrillic",
-  "\u0440": "Cyrillic",
-  "\u0441": "Cyrillic",
-  "\u0443": "Cyrillic",
-  "\u0445": "Cyrillic",
-  "\u0456": "Cyrillic",
-  "\u0455": "Cyrillic",
-  "\u0458": "Cyrillic",
-  "\u04BB": "Cyrillic",
-  "\u0501": "Cyrillic",
-  "\u051B": "Cyrillic",
-  "\u0432": "Cyrillic",
-  "\u043D": "Cyrillic",
+  "\u0430": "Cyrillic", "\u0435": "Cyrillic", "\u043E": "Cyrillic",
+  "\u0440": "Cyrillic", "\u0441": "Cyrillic", "\u0443": "Cyrillic",
+  "\u0445": "Cyrillic", "\u0456": "Cyrillic", "\u0455": "Cyrillic",
+  "\u0458": "Cyrillic", "\u04BB": "Cyrillic", "\u0501": "Cyrillic",
+  "\u051B": "Cyrillic", "\u0432": "Cyrillic", "\u043D": "Cyrillic",
   "\u0433": "Cyrillic",
-  "\u0261": "Latin Extended",
-  "\u026A": "Latin Extended",
-  "\u03B1": "Greek",
-  "\u03B5": "Greek",
-  "\u03BF": "Greek",
-  "\u03C1": "Greek",
-  "\u0391": "Greek",
-  "\u0392": "Greek",
-  "\u0395": "Greek",
-  "\u0397": "Greek",
-  "\u0399": "Greek",
-  "\u039A": "Greek",
-  "\u039C": "Greek",
-  "\u039D": "Greek",
-  "\u039F": "Greek",
-  "\u03A1": "Greek",
-  "\u03A4": "Greek",
-  "\u03A5": "Greek",
-  "\u03A7": "Greek",
-  "\u03A6": "Greek",
-  "\uFF41": "Fullwidth",
-  "\uFF42": "Fullwidth",
-  "\uFF43": "Fullwidth",
-  "\uFF44": "Fullwidth",
-  "\uFF45": "Fullwidth",
+  "\u0261": "Latin Extended", "\u026A": "Latin Extended",
+  "\u03B1": "Greek", "\u03B5": "Greek", "\u03BF": "Greek", "\u03C1": "Greek",
+  "\u0391": "Greek", "\u0392": "Greek", "\u0395": "Greek", "\u0397": "Greek",
+  "\u0399": "Greek", "\u039A": "Greek", "\u039C": "Greek", "\u039D": "Greek",
+  "\u039F": "Greek", "\u03A1": "Greek", "\u03A4": "Greek", "\u03A5": "Greek",
+  "\u03A7": "Greek", "\u03A6": "Greek",
+  "\uFF41": "Fullwidth", "\uFF42": "Fullwidth", "\uFF43": "Fullwidth",
+  "\uFF44": "Fullwidth", "\uFF45": "Fullwidth",
   "\u0131": "Turkish",
 };
 

@@ -1,4 +1,4 @@
-import type { ScanResult } from "./types";
+import type { ScanResult } from "./types.js";
 
 export function calculateScore(result: Omit<ScanResult, "score" | "scannedAt">): number {
   let score = 100;
@@ -21,7 +21,7 @@ export function calculateScore(result: Omit<ScanResult, "score" | "scannedAt">):
     }
   }
 
-  // Source map leak deductions (cap at -20 to avoid over-penalizing large repos)
+  // Source map leak deductions (cap at -20)
   score -= Math.min(result.sourceMapLeaks.length * 5, 20);
 
   // Exposed secret deductions (by severity)

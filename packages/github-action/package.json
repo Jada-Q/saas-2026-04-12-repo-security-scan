@@ -1,0 +1,21 @@
+{
+  "name": "@ghscan/github-action",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc && ncc build build/index.js -o dist --source-map",
+    "build:tsc": "tsc"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0",
+    "@ghscan/scanner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@vercel/ncc": "^0.38.4",
+    "typescript": "^5"
+  }
+}

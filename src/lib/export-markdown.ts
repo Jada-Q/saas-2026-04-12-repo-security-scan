@@ -53,10 +53,10 @@ export function exportToMarkdown(result: ScanResult): string {
   } else {
     lines.push(`Found **${result.exposedSecrets.length}** potential secrets:`);
     lines.push("");
-    lines.push("| Type | Value | File | Line |");
-    lines.push("|---|---|---|---|");
+    lines.push("| Severity | Pattern | Value | File | Line |");
+    lines.push("|---|---|---|---|---|");
     for (const s of result.exposedSecrets) {
-      lines.push(`| ${s.type} | \`${s.value}\` | ${s.file} | ${s.line} |`);
+      lines.push(`| ${s.severity.toUpperCase()} | ${s.patternName} | \`${s.value}\` | ${s.file} | ${s.line} |`);
     }
   }
   lines.push("");
