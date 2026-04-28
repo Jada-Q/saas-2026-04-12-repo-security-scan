@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync, readFile } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, extname } from "node:path";
 import type { Dependency } from "@ghscan/scanner-core";
 

@@ -1,4 +1,4 @@
-import type { ScanResult, ExposedSecret, Vulnerability } from "@ghscan/scanner-core";
+import type { ScanResult } from "@ghscan/scanner-core";
 import { getScoreLabel, SECRET_PATTERNS } from "@ghscan/scanner-core";
 
 const MARKER = "<!-- ghscan-report -->";

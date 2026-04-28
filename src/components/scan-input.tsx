@@ -62,9 +62,11 @@ export function ScanInput({
   const autoScannedRef = useRef(false);
   const isScanning = phase !== "idle" && phase !== "done" && phase !== "error";
 
-  // Load saved token
+  // Load saved token. Mount-once read from localStorage; SSR can't access it,
+  // so lazy useState init isn't an option without hydration mismatch.
   useEffect(() => {
     const saved = getStoredToken();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved) setToken(saved);
   }, []);
 
@@ -74,11 +76,13 @@ export function ScanInput({
   };
 
   // Auto-scan from URL params: ?repo=facebook/react
+  // Ref guard ensures one-shot; not a cascading-render pattern.
   useEffect(() => {
     if (autoScannedRef.current) return;
     const repoParam = searchParams.get("repo");
     if (repoParam) {
       autoScannedRef.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUrl(repoParam);
       onScan(repoParam);
     }
